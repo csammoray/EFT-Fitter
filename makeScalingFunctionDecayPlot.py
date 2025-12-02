@@ -30,16 +30,22 @@ def LoadTranslations(jsonfilename):
         return json.load(jsonfile)
 translateChannels = {} if opt.translateChannels is None else LoadTranslations(opt.translateChannels)
 
-# Load parameters of interest
-pois = import_module(opt.pois).pois
+sys.path.append("./inputs")
+sys.path.append("./functions")
+sys.path.append("./params")
 
-# Load functions
-functions = import_module(opt.functions).functions
+pois = __import__(opt.pois, globals(), locals(), ["pois"], 0)
+functions = __import__(opt.functions, globals(), locals(), ["functions"], 0)
+func_dict = {name: getattr(functions, name) for name in dir(functions) if not name.startswith("__")}
+pois_dict = {name: getattr(pois, name) for name in dir(pois) if not name.startswith("__")}
 
-# Load input measurements
+pois = pois_dict["pois"]
+functions = func_dict["functions"]
+
 inputs = []
+
 for i in opt.inputs.split(","):
-  _cfg = import_module(i)
+  _cfg = __import__(i, globals(), locals(), ["name", "X", "rho"], 0)
   _input = od()
   _input['name'] = _cfg.name
   _input['X'] = _cfg.X
@@ -147,8 +153,9 @@ hmax = opt.hmax
 hmin = opt.hmin
 
 import math
-m = "%g"%math.log(1/pois[opt.poi]['multiplier'],10)
-if m == '1': m = ''
+# m = "%g"%math.log(1/pois[opt.poi]['multiplier'],10)
+#if m == '1': m = ''
+m = ''
 if opt.poi == "cWWMinuscB":
   pstr_stripped = "c_{WW} #minus c_{B}"
   pstr = "(c_{WW} #minus c_{B}) x 10^{%s}"%m
@@ -186,14 +193,14 @@ h_axes.Draw()
 # Loop over channels and plot partial width and br
 for ch in channels:
   for mode in ['partial','br']:
-    for k,v in styleMap['%s_quad'%mode].iteritems(): getattr(grs["%s_vs_%s_%s_quad"%(ch,opt.poi,mode)],"Set%s"%k)(v)
+    for k,v in styleMap['%s_quad'%mode].items(): getattr(grs["%s_vs_%s_%s_quad"%(ch,opt.poi,mode)],"Set%s"%k)(v)
     if ch in ch_unaffected: 
       getattr(grs["%s_vs_%s_%s_quad"%(ch,opt.poi,mode)],"SetLineWidth")(1)
-    for k,v in colorMap[ch].iteritems(): getattr(grs["%s_vs_%s_%s_quad"%(ch,opt.poi,mode)],"Set%s"%k)(v)
+    for k,v in colorMap[ch].items(): getattr(grs["%s_vs_%s_%s_quad"%(ch,opt.poi,mode)],"Set%s"%k)(v)
     grs["%s_vs_%s_%s_quad"%(ch,opt.poi,mode)].Draw("Same C")
 
 # Plot total width 
-for k,v in styleMap['tot_quad'].iteritems(): getattr(grs["tot_vs_%s_quad"%opt.poi],"Set%s"%k)(v)
+for k,v in styleMap['tot_quad'].items(): getattr(grs["tot_vs_%s_quad"%opt.poi],"Set%s"%k)(v)
 grs["tot_vs_%s_quad"%opt.poi].Draw("Same C")
 
 
@@ -250,7 +257,7 @@ lat2.DrawLatex(pois[opt.poi]['range'][1]+0.01*prange,0.9*(hmax-hmin)+hmin,"#colo
 
 # Create dummy graph for linear
 gr_dummy = ROOT.TGraph()
-for k,v in styleMap['partial_dummy'].iteritems(): getattr(gr_dummy,"Set%s"%k)(v)
+for k,v in styleMap['partial_dummy'].items(): getattr(gr_dummy,"Set%s"%k)(v)
 
 if opt.leg_pos == "bottom_right": leg = ROOT.TLegend(0.7,0.21,0.8,0.47)
 elif opt.leg_pos == "top_right": leg = ROOT.TLegend(0.7,0.59,0.8,0.85)
@@ -266,5 +273,5 @@ leg.AddEntry(gr_dummy,"#Gamma^{f}","L")
 leg.Draw("Same")
 
 canv.Update()
-canv.SaveAs("/eos/home-j/jlangfor/www/CMS/thesis/chapter7/scaling_functions/decay_vs_%s.png"%opt.poi)
-canv.SaveAs("/eos/home-j/jlangfor/www/CMS/thesis/chapter7/scaling_functions/decay_vs_%s.pdf"%opt.poi)
+canv.SaveAs("decay_vs_%s.png"%opt.poi)
+canv.SaveAs("decay_vs_%s.pdf"%opt.poi)

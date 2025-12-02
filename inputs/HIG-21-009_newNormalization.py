@@ -1,0 +1,52 @@
+from collections import OrderedDict as od
+
+name = 'HIG-21-009_newNormalization'
+
+X = od()
+X['pTH_0_10_hzz'] = {'bestfit':0.6222807819516524, 'Up01Sigma':0.262620667401651, 'Down01Sigma':0.22163005189706633, 'Up01SigmaExp':0.20463846836430127, 'Down01SigmaExp':0.14967866842345856, 'merged':False}
+X['pTH_10_20_hzz'] = {'bestfit':1.2373540118307296, 'Up01Sigma':0.2500379190050053, 'Down01Sigma':0.2299977248596997, 'Up01SigmaExp':0.13190694676171696, 'Down01SigmaExp':0.13034468375549826, 'merged':False}
+X['pTH_20_30_hzz'] = {'bestfit':1.0212430584184105, 'Up01Sigma':0.25976671435846443, 'Down01Sigma':0.23240051410141377, 'Up01SigmaExp':0.13662245071173945, 'Down01SigmaExp':0.12829012779785146, 'merged':False}
+X['pTH_30_45_hzz'] = {'bestfit':1.172731914893617, 'Up01Sigma':0.25338212765957446, 'Down01Sigma':0.22544340425531914, 'Up01SigmaExp':0.1435404255319149, 'Down01SigmaExp':0.12707063829787235, 'merged':False}
+X['pTH_45_60_hzz'] = {'bestfit':0.47010817610062894, 'Up01Sigma':0.22438238993710694, 'Down01Sigma':0.18764779874213838, 'Up01SigmaExp':0.13704150943396226, 'Down01SigmaExp':0.12331572327044026, 'merged':False}
+X['pTH_60_80_hzz'] = {'bestfit':0.9110090314543756, 'Up01Sigma':0.2780130800373715, 'Down01Sigma':0.2367408906882591, 'Up01SigmaExp':0.1287994394269698, 'Down01SigmaExp':0.13094051697290565, 'merged':False}
+X['pTH_80_120_hzz'] = {'bestfit':0.9701777560807512, 'Up01Sigma':0.26498291359159176, 'Down01Sigma':0.23319357895643686, 'Up01SigmaExp':0.1259311374666169, 'Down01SigmaExp':0.13581397352324615, 'merged':False}
+X['pTH_120_200_hzz'] = {'bestfit':1.0404642914718685, 'Up01Sigma':0.30531597614057715, 'Down01Sigma':0.2582339190714171, 'Up01SigmaExp':0.14684426890214414, 'Down01SigmaExp':0.13563598258906984, 'merged':False}
+X['pTH_200_inf_hzz'] = {'bestfit':0.4150187905705501, 'Up01Sigma':0.3103450632046464, 'Down01Sigma':0.21615989067304409, 'Up01SigmaExp':0.13188247352237786, 'Down01SigmaExp':0.12386744106593782, 'merged':False}
+
+rho = od()
+rho[('pTH_0_10_hzz','pTH_10_20_hzz')] = -0.0967326
+rho[('pTH_0_10_hzz','pTH_20_30_hzz')] = 0.05601611
+rho[('pTH_0_10_hzz','pTH_30_45_hzz')] = 0.04766348
+rho[('pTH_0_10_hzz','pTH_45_60_hzz')] = 0.02060312
+rho[('pTH_0_10_hzz','pTH_60_80_hzz')] = 0.02673139
+rho[('pTH_0_10_hzz','pTH_80_120_hzz')] = 0.03058333
+rho[('pTH_0_10_hzz','pTH_120_200_hzz')] = 0.02909448
+rho[('pTH_0_10_hzz','pTH_200_inf_hzz')] = 0.008389685
+rho[('pTH_10_20_hzz','pTH_20_30_hzz')] = -0.06725669
+rho[('pTH_10_20_hzz','pTH_30_45_hzz')] = 0.07734668
+rho[('pTH_10_20_hzz','pTH_45_60_hzz')] = 0.02889905
+rho[('pTH_10_20_hzz','pTH_60_80_hzz')] = 0.03943631
+rho[('pTH_10_20_hzz','pTH_80_120_hzz')] = 0.04551214
+rho[('pTH_10_20_hzz','pTH_120_200_hzz')] = 0.04483562
+rho[('pTH_10_20_hzz','pTH_200_inf_hzz')] = 0.0129694
+rho[('pTH_20_30_hzz','pTH_30_45_hzz')] = -0.05117355
+rho[('pTH_20_30_hzz','pTH_45_60_hzz')] = 0.03094259
+rho[('pTH_20_30_hzz','pTH_60_80_hzz')] = 0.03185632
+rho[('pTH_20_30_hzz','pTH_80_120_hzz')] = 0.0358998
+rho[('pTH_20_30_hzz','pTH_120_200_hzz')] = 0.03567104
+rho[('pTH_20_30_hzz','pTH_200_inf_hzz')] = 0.01028981
+rho[('pTH_30_45_hzz','pTH_45_60_hzz')] = -0.05633437
+rho[('pTH_30_45_hzz','pTH_60_80_hzz')] = 0.04240954
+rho[('pTH_30_45_hzz','pTH_80_120_hzz')] = 0.04289988
+rho[('pTH_30_45_hzz','pTH_120_200_hzz')] = 0.04139446
+rho[('pTH_30_45_hzz','pTH_200_inf_hzz')] = 0.01158971
+rho[('pTH_45_60_hzz','pTH_60_80_hzz')] = -0.07123682
+rho[('pTH_45_60_hzz','pTH_80_120_hzz')] = 0.02473843
+rho[('pTH_45_60_hzz','pTH_120_200_hzz')] = 0.01876875
+rho[('pTH_45_60_hzz','pTH_200_inf_hzz')] = 0.005271342
+rho[('pTH_60_80_hzz','pTH_80_120_hzz')] = -0.03961455
+rho[('pTH_60_80_hzz','pTH_120_200_hzz')] = 0.02725944
+rho[('pTH_60_80_hzz','pTH_200_inf_hzz')] = 0.00744921
+rho[('pTH_80_120_hzz','pTH_120_200_hzz')] = -0.01166342
+rho[('pTH_80_120_hzz','pTH_200_inf_hzz')] = 0.008845563
+rho[('pTH_120_200_hzz','pTH_200_inf_hzz')] = -0.01756792

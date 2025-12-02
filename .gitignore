@@ -1,4 +1,8 @@
+/plots
 *.root
 *.pkl
 *.swp
+*.pyc
+*.pdf
+**/__pycache__/
 *~

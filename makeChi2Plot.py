@@ -10,21 +10,26 @@ from scipy import interpolate
 from optparse import OptionParser
 def get_options():
   parser = OptionParser()
-  parser.add_option('--poi', dest='poi', default='cG', help="Main poi to plot")
+  parser.add_option('--poi', dest='poi', default='chb', help="Main poi to plot")
   parser.add_option('--otherPOIs', dest='otherPOIs', default='', help="Comma separated list of profiled pois")
+  parser.add_option('--pois', dest='pois', default='params.HEL', help="Name of json file storing pois")
   parser.add_option('--inputPkl', dest='inputPkl', default='results.pkl', help="Input pkl file storing results")
   parser.add_option('--doProfiledPOIFrac', dest='doProfiledPOIFrac', default=False, action="store_true", help="Plot fractional profiled poi instead of the pull")
   parser.add_option('--doLinear', dest='doLinear', default=False, action="store_true", help="Add linear lines to plot")
   parser.add_option('--outputDir', dest='outputDir', default='.', help="Output plot directory")
+  parser.add_option('--noProfiled', default=False, action="store_true", help="Do the plot without profiled scans")
   return parser.parse_args()
 (opt,args) = get_options()
 
 # Load results
-with open(opt.inputPkl,"r") as fpkl: results = pickle.load(fpkl)
+with open(opt.inputPkl,"rb") as fpkl: results = pickle.load(fpkl)
 
 # Extract full list of pois
-from importlib import import_module
-pois = import_module("params.HEL").pois
+import sys
+sys.path.append("./params")
+pois = __import__(opt.pois, globals(), locals(), ["pois"], 0)
+pois_dict = {name: getattr(pois, name) for name in dir(pois) if not name.startswith("__")}
+pois = pois_dict["pois"]
 
 if opt.otherPOIs == "all":
   opoistr = ""
@@ -137,8 +142,13 @@ def extractVals( _p, _dchi2 ):
 
 # Do interpolations and make dchi2 graphs
 grs = od()
+if opt.noProfiled: 
+  modes = ['fixed','fixed_linear']
+else: 
+  modes = ['fixed','profiled','fixed_linear','profiled_linear']
+
 for poi in pois:
-  for mode in ['fixed','profiled','fixed_linear','profiled_linear']:
+  for mode in modes:
     #dchi2 = results[poi][mode]['dchi2'][1:]
     dchi2 = results[poi][mode]['dchi2']
     #p = results[poi][mode]['pvals'][1:]
@@ -151,6 +161,7 @@ for poi in pois:
     results[poi][mode]['dchi2_ext'] = dchi2ext
 
     bf, up1, up2, down1, down2 = extractVals(pext,dchi2ext)
+    print(f"Best-fit for {poi} in {mode} mode: {bf}, +1sigma: {up1}, -1sigma: {down1}")
     results[poi][mode]['bestfit'] = bf
     results[poi][mode]['up01sigma'] = up1 
     results[poi][mode]['up02sigma'] = down1 
@@ -172,62 +183,66 @@ for poi in pois:
       for i in range(len(p)): grs["%s_%s"%(poi,mode)].SetPoint( grs["%s_%s"%(poi,mode)].GetN(), p[i], dchi2[i] )
       for i in range(len(pext)): grs["%s_%s_ext"%(poi,mode)].SetPoint( grs["%s_%s_ext"%(poi,mode)].GetN(), pext[i], dchi2ext[i] )
 
-# Make profiled poi curves
-mode = "profiled"
-if opt.otherPOIs != '':
-  for opoi in opt.otherPOIs.split(","):
-    #p = results[opt.poi][mode]['pvals'][1:]
-    p = results[opt.poi][mode]['pvals']
-    pext = np.linspace( p.min(), p.max(), 10000 )
-    #allpvals = results[opt.poi][mode]['allpvals'][1:]
-    allpvals = results[opt.poi][mode]['allpvals']
+if opt.noProfiled:
+  pass
+else:  
+  # Make profiled poi curves
+  mode = "profiled"
+  if opt.otherPOIs != '':
+    for opoi in opt.otherPOIs.split(","):
+      #p = results[opt.poi][mode]['pvals'][1:]
+      p = results[opt.poi][mode]['pvals']
+      pext = np.linspace( p.min(), p.max(), 10000 )
+      #allpvals = results[opt.poi][mode]['allpvals'][1:]
+      allpvals = results[opt.poi][mode]['allpvals']
 
-    # Extract index of other POI and fill values
-    i_op = pois.keys().index(opoi)
-    op = []
-    for j in range(len(allpvals)): op.append( allpvals[j][i_op] )
-    op = np.array(op)
+      # Extract index of other POI and fill values
+      i_op = list(pois.keys()).index(opoi)
+      op = []
+      for j in range(len(allpvals)):
+          op.append( allpvals[j][i_op] )
+      op = np.array(op)
 
-    # Variation with respect to minimum
-    fop = (op-pois[opoi]['range'][0])/abs(pois[opoi]['range'][1]-pois[opoi]['range'][0])
+      # Variation with respect to minimum
+      fop = (op-pois[opoi]['range'][0])/abs(pois[opoi]['range'][1]-pois[opoi]['range'][0])
 
-    # Pull with respect to closest minimum
-    obf = results[opoi][mode]['bestfit']
-    oup1 = results[opoi][mode]['up01sigma']
-    odown1 = results[opoi][mode]['down01sigma']
-    pullop = []
-    for i in range(len(op)):
-      #if op[i]>obf: pullop.append((op[i]-obf)/abs(odown1))
-      #else: pullop.append((op[i]-obf)/abs(oup1))
+      # Pull with respect to closest minimum
+      obf = results[opoi][mode]['bestfit']
+      oup1 = results[opoi][mode]['up01sigma']
+      odown1 = results[opoi][mode]['down01sigma']
+      pullop = []
+      for i in range(len(op)):
+        #if op[i]>obf: pullop.append((op[i]-obf)/abs(odown1))
+        #else: pullop.append((op[i]-obf)/abs(oup1))
+        print(op)
+        iomin = abs(results[opoi][mode]['minimumv2']-op[i]).argmin()
+        omin = results[opoi][mode]['minimumv2'][iomin]
+        if results[opoi][mode]['up01crossv2'][iomin] == None: oup1 = 0.5*abs(results[opoi][mode]['up02crossv2'][iomin]-omin)
+        else: oup1 = abs(results[opoi][mode]['up01crossv2'][iomin]-omin)
+        if results[opoi][mode]['down01crossv2'][iomin] == None: odown1 = -0.5*abs(results[opoi][mode]['down02crossv2'][iomin]-omin)
+        else: odown1 = -1*abs(results[opoi][mode]['down01crossv2'][iomin]-omin)
 
-      iomin = abs(results[opoi][mode]['minimumv2']-op[i]).argmin()
-      omin = results[opoi][mode]['minimumv2'][iomin]
-      if results[opoi][mode]['up01crossv2'][iomin] == None: oup1 = 0.5*abs(results[opoi][mode]['up02crossv2'][iomin]-omin)
-      else: oup1 = abs(results[opoi][mode]['up01crossv2'][iomin]-omin)
-      if results[opoi][mode]['down01crossv2'][iomin] == None: odown1 = -0.5*abs(results[opoi][mode]['down02crossv2'][iomin]-omin)
-      else: odown1 = -1*abs(results[opoi][mode]['down01crossv2'][iomin]-omin)
+        if op[i]>omin: pullop.append((op[i]-omin)/abs(odown1))
+        else: pullop.append((op[i]-omin)/abs(oup1))
+      pullop = np.array(pullop)
+      
+      # Interpolate
+      f_frac = interpolate.interp1d(p,fop,'cubic')
+      fop_ext = f_frac(pext)
+      f_pull = interpolate.interp1d(p,pullop,'cubic')
+      pullop_ext = f_pull(pext)
 
-      if op[i]>omin: pullop.append((op[i]-omin)/abs(odown1))
-      else: pullop.append((op[i]-omin)/abs(oup1))
-    pullop = np.array(pullop)
-    
-    # Interpolate
-    f_frac = interpolate.interp1d(p,fop,'cubic')
-    fop_ext = f_frac(pext)
-    f_pull = interpolate.interp1d(p,pullop,'cubic')
-    pullop_ext = f_pull(pext)
-
-    # Make graphs
-    grs["%s_profiledFrac_%s"%(opt.poi,opoi)] = ROOT.TGraph()
-    grs["%s_profiledFrac_ext_%s"%(opt.poi,opoi)] = ROOT.TGraph()
-    grs["%s_profiledPull_%s"%(opt.poi,opoi)] = ROOT.TGraph()
-    grs["%s_profiledPull_ext_%s"%(opt.poi,opoi)] = ROOT.TGraph()
-    for i in range(len(p)):
-      grs["%s_profiledFrac_%s"%(opt.poi,opoi)].SetPoint(grs["%s_profiledFrac_%s"%(opt.poi,opoi)].GetN(),p[i],fop[i])
-      grs["%s_profiledPull_%s"%(opt.poi,opoi)].SetPoint(grs["%s_profiledPull_%s"%(opt.poi,opoi)].GetN(),p[i],pullop[i])
-    for i in range(len(pext)):
-      grs["%s_profiledFrac_ext_%s"%(opt.poi,opoi)].SetPoint(grs["%s_profiledFrac_ext_%s"%(opt.poi,opoi)].GetN(),pext[i],fop_ext[i])
-      grs["%s_profiledPull_ext_%s"%(opt.poi,opoi)].SetPoint(grs["%s_profiledPull_ext_%s"%(opt.poi,opoi)].GetN(),pext[i],pullop_ext[i])
+      # Make graphs
+      grs["%s_profiledFrac_%s"%(opt.poi,opoi)] = ROOT.TGraph()
+      grs["%s_profiledFrac_ext_%s"%(opt.poi,opoi)] = ROOT.TGraph()
+      grs["%s_profiledPull_%s"%(opt.poi,opoi)] = ROOT.TGraph()
+      grs["%s_profiledPull_ext_%s"%(opt.poi,opoi)] = ROOT.TGraph()
+      for i in range(len(p)):
+        grs["%s_profiledFrac_%s"%(opt.poi,opoi)].SetPoint(grs["%s_profiledFrac_%s"%(opt.poi,opoi)].GetN(),p[i],fop[i])
+        grs["%s_profiledPull_%s"%(opt.poi,opoi)].SetPoint(grs["%s_profiledPull_%s"%(opt.poi,opoi)].GetN(),p[i],pullop[i])
+      for i in range(len(pext)):
+        grs["%s_profiledFrac_ext_%s"%(opt.poi,opoi)].SetPoint(grs["%s_profiledFrac_ext_%s"%(opt.poi,opoi)].GetN(),pext[i],fop_ext[i])
+        grs["%s_profiledPull_ext_%s"%(opt.poi,opoi)].SetPoint(grs["%s_profiledPull_ext_%s"%(opt.poi,opoi)].GetN(),pext[i],pullop_ext[i])
 
   
     
@@ -264,7 +279,7 @@ colorMap['cu'] = {'LineColor':ROOT.kMagenta-7,'MarkerColor':ROOT.kMagenta-7}
 colorMap['cd'] = {'LineColor':ROOT.kViolet+6,'MarkerColor':ROOT.kViolet+6}
 #colorMap['cd'] = {'LineColor':ROOT.kYellow+1,'MarkerColor':ROOT.kYellow+1}
 colorMap['cl'] = {'LineColor':ROOT.kCyan-7,'MarkerColor':ROOT.kCyan-7}
-#colorMap['cl'] = {'LineColor':ROOT.kViolet+6,'MarkerColor':ROOT.kViolet+6}
+colorMap['chb'] = {'LineColor':ROOT.kViolet+6,'MarkerColor':ROOT.kViolet+6}
 
 # POI str
 import math
@@ -327,12 +342,18 @@ h_axes.GetYaxis().SetLabelOffset(0.007)
 h_axes.GetYaxis().CenterTitle()
 h_axes.Draw()
 
-if opt.doLinear: modes = ['fixed','fixed_linear','profiled','profiled_linear']
-else: modes = ['fixed','profiled']
+if opt.doLinear: 
+  modes = ['fixed','fixed_linear','profiled','profiled_linear']
+  if opt.noProfiled:
+    modes = ['fixed','fixed_linear']
+else: 
+  modes = ['fixed','profiled']
+  if opt.noProfiled:
+    modes = ['fixed']
 
 for mode in modes:
-  for k,v in styleMap[mode].iteritems(): getattr(grs["%s_%s"%(opt.poi,mode)],"Set%s"%k)(v)
-  for k,v in styleMap["%s_ext"%mode].iteritems(): getattr(grs["%s_%s_ext"%(opt.poi,mode)],"Set%s"%k)(v)
+  for k,v in styleMap[mode].items(): getattr(grs["%s_%s"%(opt.poi,mode)],"Set%s"%k)(v)
+  for k,v in styleMap["%s_ext"%mode].items(): getattr(grs["%s_%s_ext"%(opt.poi,mode)],"Set%s"%k)(v)
   grs["%s_%s"%(opt.poi,mode)].Draw("Same P")
   grs["%s_%s_ext"%(opt.poi,mode)].Draw("Same C")
 
@@ -363,7 +384,7 @@ hlines['hline_box'].Draw("SAME")
 grs_dummy = od()
 for mode in modes:
   grs_dummy["%s_%s"%(opt.poi,mode)] = ROOT.TGraph()
-  for k,v in styleMap["%s_dummy"%mode].iteritems(): getattr(grs_dummy["%s_%s"%(opt.poi,mode)],"Set%s"%k)(v)
+  for k,v in styleMap["%s_dummy"%mode].items(): getattr(grs_dummy["%s_%s"%(opt.poi,mode)],"Set%s"%k)(v)
 
 if opt.doLinear: 
   leg = ROOT.TLegend(0.15,0.78,0.85,0.89)
@@ -371,18 +392,24 @@ if opt.doLinear:
   leg.SetFillStyle(0)
   leg.SetLineColor(0)
   leg.SetTextSize(0.032)
-  leg.AddEntry( grs_dummy["%s_profiled"%opt.poi], "Profiled", "LP") 
-  leg.AddEntry( grs_dummy["%s_profiled_linear"%opt.poi], "Profiled (Lin. terms only)", "LP") 
-  leg.AddEntry( grs_dummy["%s_fixed"%opt.poi], "Other c_{p} = 0", "LP") 
-  leg.AddEntry( grs_dummy["%s_fixed_linear"%opt.poi], "Other c_{p} = 0 (Lin. terms only)", "LP") 
+  if opt.noProfiled:
+    leg.AddEntry( grs_dummy["%s_fixed"%opt.poi], "Other c_{p} = 0", "LP") 
+    leg.AddEntry( grs_dummy["%s_fixed_linear"%opt.poi], "Other c_{p} = 0 (Lin. terms only)", "LP") 
+  else:
+    leg.AddEntry( grs_dummy["%s_fixed"%opt.poi], "Other c_{p} = 0", "LP") 
+    leg.AddEntry( grs_dummy["%s_fixed_linear"%opt.poi], "Other c_{p} = 0 (Lin. terms only)", "LP")
+    leg.AddEntry( grs_dummy["%s_profiled"%opt.poi], "Profiled", "LP") 
+    leg.AddEntry( grs_dummy["%s_profiled_linear"%opt.poi], "Profiled (Lin. terms only)", "LP") 
   leg.Draw("Same")
 else:
   leg = ROOT.TLegend(0.15,0.78,0.55,0.89)
   leg.SetFillStyle(0)
   leg.SetLineColor(0)
   leg.SetTextSize(0.032)
-  leg.AddEntry( grs_dummy["%s_profiled"%opt.poi], "Profiled", "LP") 
-  leg.AddEntry( grs_dummy["%s_fixed"%opt.poi], "Other c_{p} = 0", "LP") 
+  if opt.noProfiled:
+    leg.AddEntry( grs_dummy["%s_fixed"%opt.poi], "Other c_{p} = 0", "LP") 
+  else:
+    leg.AddEntry( grs_dummy["%s_profiled"%opt.poi], "Profiled", "LP") 
   leg.Draw("Same")
 
 
@@ -398,10 +425,13 @@ lat1 = ROOT.TLatex()
 lat1.SetTextFont(42)
 lat1.SetTextAlign(12)
 lat1.SetTextSize(0.035)
-xpos = 0.05*(results[opt.poi]['profiled']['pvals_ext'].max()-results[opt.poi]['profiled']['pvals_ext'].min())+results[opt.poi]['profiled']['pvals_ext'].min()
-xposinv = results[opt.poi]['profiled']['pvals_ext'].max()-0.05*(results[opt.poi]['profiled']['pvals_ext'].max()-results[opt.poi]['profiled']['pvals_ext'].min())
-lat1.DrawLatex(xpos,1.,"#color[2]{#bf{1#sigma}}")
-lat1.DrawLatex(xpos,4.,"#color[2]{#bf{2#sigma}}")
+if opt.noProfiled:
+  pass
+else:
+  xpos = 0.05*(results[opt.poi]['profiled']['pvals_ext'].max()-results[opt.poi]['profiled']['pvals_ext'].min())+results[opt.poi]['profiled']['pvals_ext'].min()
+  xposinv = results[opt.poi]['profiled']['pvals_ext'].max()-0.05*(results[opt.poi]['profiled']['pvals_ext'].max()-results[opt.poi]['profiled']['pvals_ext'].min())
+  lat1.DrawLatex(xpos,1.,"#color[2]{#bf{1#sigma}}")
+  lat1.DrawLatex(xpos,4.,"#color[2]{#bf{2#sigma}}")
   
 if opt.otherPOIs != '':
   pad2.cd()
@@ -431,9 +461,9 @@ if opt.otherPOIs != '':
   for opoi in opt.otherPOIs.split(","):
     if opt.doProfiledPOIFrac: mode = "profiledFrac"
     else: mode = "profiledPull"
-    for k,v in styleMap[mode].iteritems(): getattr(grs["%s_%s_%s"%(opt.poi,mode,opoi)],"Set%s"%k)(v)
-    for k,v in styleMap["%s_ext"%mode].iteritems(): getattr(grs["%s_%s_ext_%s"%(opt.poi,mode,opoi)],"Set%s"%k)(v)
-    for k,v in colorMap[opoi].iteritems(): 
+    for k,v in styleMap[mode].items(): getattr(grs["%s_%s_%s"%(opt.poi,mode,opoi)],"Set%s"%k)(v)
+    for k,v in styleMap["%s_ext"%mode].items(): getattr(grs["%s_%s_ext_%s"%(opt.poi,mode,opoi)],"Set%s"%k)(v)
+    for k,v in colorMap[opoi].items(): 
       getattr(grs["%s_%s_%s"%(opt.poi,mode,opoi)],"Set%s"%k)(v)
       getattr(grs["%s_%s_ext_%s"%(opt.poi,mode,opoi)],"Set%s"%k)(v)
 
@@ -485,5 +515,7 @@ if opt.otherPOIs != '':
 
 
 canv.Update()
-canv.SaveAs("%s/%s.png"%(opt.outputDir,opt.poi))
+#canv.SaveAs("%s/%s.png"%(opt.outputDir,opt.poi))
 canv.SaveAs("%s/%s.pdf"%(opt.outputDir,opt.poi))
+
+# print(f"Profiled dchi2 values: {results[opt.poi]['profiled']['dchi2']}")

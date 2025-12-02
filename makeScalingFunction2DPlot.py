@@ -48,14 +48,22 @@ def LoadTranslations(jsonfilename):
 translateBins = {} if opt.translateBins is None else LoadTranslations(opt.translateBins)
 translateChannels = {} if opt.translateChannels is None else LoadTranslations(opt.translateChannels)
 
-# Load parameters of interest
-pois = import_module(opt.pois).pois
-# Load functions
-functions = import_module(opt.functions).functions
-# Load input measurements
+sys.path.append("./inputs")
+sys.path.append("./functions")
+sys.path.append("./params")
+
+pois = __import__(opt.pois, globals(), locals(), ["pois"], 0)
+functions = __import__(opt.functions, globals(), locals(), ["functions"], 0)
+func_dict = {name: getattr(functions, name) for name in dir(functions) if not name.startswith("__")}
+pois_dict = {name: getattr(pois, name) for name in dir(pois) if not name.startswith("__")}
+
+pois = pois_dict["pois"]
+functions = func_dict["functions"]
+
 inputs = []
+
 for i in opt.inputs.split(","):
-  _cfg = import_module(i)
+  _cfg = __import__(i, globals(), locals(), ["name", "X", "rho"], 0)
   _input = od()
   _input['name'] = _cfg.name
   _input['X'] = _cfg.X
@@ -167,8 +175,9 @@ yw = abs(pois[opt.ypoi]['range'][0]-pois[opt.ypoi]['range'][1])/opt.nBins
 
 # POI str
 import math
-m = "%g"%math.log(1/pois[opt.xpoi]['multiplier'],10)
-if m == '1': m = ''
+# m = "%g"%math.log(1/pois[opt.xpoi]['multiplier'],10)
+# if m == '1': m = ''
+m = ''
 if opt.xpoi == "cWWMinuscB":
   xpstr = "(c_{WW} #minus c_{B}) x 10^{%s}"%m
   xpstr_stripped = "c_{WW} #minus c_{B}"
@@ -176,8 +185,9 @@ else:
   xpstr = "c_{%s} x 10^{%s}"%(opt.xpoi.split("c")[-1],m)
   xpstr_stripped = "c_{%s}"%opt.xpoi.split("c")[-1]
 
-m = "%g"%math.log(1/pois[opt.ypoi]['multiplier'],10)
-if m == '1': m = ''
+# m = "%g"%math.log(1/pois[opt.ypoi]['multiplier'],10)
+# if m == '1': m = ''
+m = ''
 if opt.ypoi == "cWWMinuscB":
   ypstr = "(c_{WW} #minus c_{B}) x 10^{%s}"%m
   ypstr_stripped = "c_{WW} #minus c_{B}"
@@ -341,5 +351,5 @@ lat2.DrawLatex(11.5,5.5,"#color[861]{#mu_{decay} = 1.5}")
 
   
 canv.Update()
-canv.SaveAs("/eos/home-j/jlangfor/www/CMS/thesis/chapter7/scaling_functions/qqH_BSM_hzz_cWWMinuscB_vs_cHW.png")
-canv.SaveAs("/eos/home-j/jlangfor/www/CMS/thesis/chapter7/scaling_functions/qqH_BSM_hzz_cWWMinuscB_vs_cHW.pdf")
+canv.SaveAs("qqH_BSM_hzz_cWWMinuscB_vs_cHW.png")
+canv.SaveAs("qqH_BSM_hzz_cWWMinuscB_vs_cHW.pdf")

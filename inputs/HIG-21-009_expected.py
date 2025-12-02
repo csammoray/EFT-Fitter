@@ -1,0 +1,52 @@
+from collections import OrderedDict as od
+
+name = 'HIG-21-009_expected'
+
+X = od()
+X['pTH_0_10_hzz'] = {'bestfit':0.999, 'Up01Sigma':0.675, 'Down01Sigma':-0.537, 'Up01SigmaExp':0.675, 'Down01SigmaExp':-0.537, 'merged':False}
+X['pTH_10_20_hzz'] = {'bestfit':0.999, 'Up01Sigma':0.489, 'Down01Sigma':-0.404, 'Up01SigmaExp':0.489, 'Down01SigmaExp':-0.404, 'merged':False}
+X['pTH_20_30_hzz'] = {'bestfit':0.999, 'Up01Sigma':0.539, 'Down01Sigma':-0.433, 'Up01SigmaExp':0.539, 'Down01SigmaExp':-0.433, 'merged':False}
+X['pTH_30_45_hzz'] = {'bestfit':0.999, 'Up01Sigma':0.51, 'Down01Sigma':-0.412, 'Up01SigmaExp':0.51, 'Down01SigmaExp':-0.412, 'merged':False}
+X['pTH_45_60_hzz'] = {'bestfit':0.999, 'Up01Sigma':0.662, 'Down01Sigma':-0.509, 'Up01SigmaExp':0.662, 'Down01SigmaExp':-0.509, 'merged':False}
+X['pTH_60_80_hzz'] = {'bestfit':0.999, 'Up01Sigma':0.701, 'Down01Sigma':-0.528, 'Up01SigmaExp':0.701, 'Down01SigmaExp':-0.528, 'merged':False}
+X['pTH_80_120_hzz'] = {'bestfit':0.999, 'Up01Sigma':0.632, 'Down01Sigma':-0.482, 'Up01SigmaExp':0.632, 'Down01SigmaExp':-0.482, 'merged':False}
+X['pTH_120_200_hzz'] = {'bestfit':1.0, 'Up01Sigma':0.674, 'Down01Sigma':-0.489, 'Up01SigmaExp':0.674, 'Down01SigmaExp':-0.489, 'merged':False}
+X['pTH_200_inf_hzz'] = {'bestfit':1.0, 'Up01Sigma':0.965, 'Down01Sigma':-0.607, 'Up01SigmaExp':0.965, 'Down01SigmaExp':-0.607, 'merged':False}
+
+rho = od()
+rho[('pTH_0_10_hzz','pTH_10_20_hzz')] = -0.124765
+rho[('pTH_0_10_hzz','pTH_20_30_hzz')] = 0.0271702
+rho[('pTH_0_10_hzz','pTH_30_45_hzz')] = 0.0159797
+rho[('pTH_0_10_hzz','pTH_45_60_hzz')] = 0.0129441
+rho[('pTH_0_10_hzz','pTH_60_80_hzz')] = 0.0117024
+rho[('pTH_0_10_hzz','pTH_80_120_hzz')] = 0.0120653
+rho[('pTH_0_10_hzz','pTH_120_200_hzz')] = 0.010984
+rho[('pTH_0_10_hzz','pTH_200_inf_hzz')] = 0.00817082
+rho[('pTH_10_20_hzz','pTH_20_30_hzz')] = -0.106483
+rho[('pTH_10_20_hzz','pTH_30_45_hzz')] = 0.0254905
+rho[('pTH_10_20_hzz','pTH_45_60_hzz')] = 0.0133644
+rho[('pTH_10_20_hzz','pTH_60_80_hzz')] = 0.0125684
+rho[('pTH_10_20_hzz','pTH_80_120_hzz')] = 0.0131775
+rho[('pTH_10_20_hzz','pTH_120_200_hzz')] = 0.0117789
+rho[('pTH_10_20_hzz','pTH_200_inf_hzz')] = 0.0086666
+rho[('pTH_20_30_hzz','pTH_30_45_hzz')] = -0.0890522
+rho[('pTH_20_30_hzz','pTH_45_60_hzz')] = 0.0182877
+rho[('pTH_20_30_hzz','pTH_60_80_hzz')] = 0.0107486
+rho[('pTH_20_30_hzz','pTH_80_120_hzz')] = 0.0118604
+rho[('pTH_20_30_hzz','pTH_120_200_hzz')] = 0.010212
+rho[('pTH_20_30_hzz','pTH_200_inf_hzz')] = 0.00743859
+rho[('pTH_30_45_hzz','pTH_45_60_hzz')] = -0.0722279
+rho[('pTH_30_45_hzz','pTH_60_80_hzz')] = 0.0173621
+rho[('pTH_30_45_hzz','pTH_80_120_hzz')] = 0.0128211
+rho[('pTH_30_45_hzz','pTH_120_200_hzz')] = 0.010797
+rho[('pTH_30_45_hzz','pTH_200_inf_hzz')] = 0.00782054
+rho[('pTH_45_60_hzz','pTH_60_80_hzz')] = -0.0777028
+rho[('pTH_45_60_hzz','pTH_80_120_hzz')] = 0.014867
+rho[('pTH_45_60_hzz','pTH_120_200_hzz')] = 0.00864016
+rho[('pTH_45_60_hzz','pTH_200_inf_hzz')] = 0.00627563
+rho[('pTH_60_80_hzz','pTH_80_120_hzz')] = -0.0516111
+rho[('pTH_60_80_hzz','pTH_120_200_hzz')] = 0.0100401
+rho[('pTH_60_80_hzz','pTH_200_inf_hzz')] = 0.0057144
+rho[('pTH_80_120_hzz','pTH_120_200_hzz')] = -0.0324579
+rho[('pTH_80_120_hzz','pTH_200_inf_hzz')] = 0.00705124
+rho[('pTH_120_200_hzz','pTH_200_inf_hzz')] = -0.0251159
